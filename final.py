@@ -136,6 +136,40 @@ plt.savefig('elbow1990.png', format='png',dpi=600,
 plt.show()
 
 
+kmeans = KMeans(n_clusters= 3)
+ 
+#prediction the labels of clusters.
+pred = kmeans.fit(data)
+print(pred)
+center = kmeans.cluster_centers_
+print(center)
+
+
+data['cluster'] = kmeans.labels_
+
+# creating a plot which shpws clusters using pyplot
+for i in range(3):
+    cluster_data = data[data['cluster'] == i]
+    plt.scatter(cluster_data['EnergyPower1990'], cluster_data['EnergyUse1990'], label=f'Cluster {i}')
+
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], marker='x', c='black', label='Cluster Centers')
+plt.xlabel('EnergyPower1990')
+plt.ylabel('EnergyUse1990')
+plt.title('Cluster Membership and Centers')
+plt.legend()
+plt.show()
+
+x = ePower_eUse2014['EnergyPower2014']
+y = ePower_eUse2014['EnergyUse2014']
+y = y.to_frame()
+extcol =  ePower_eUse2014['EnergyPower2014']
+
+extcol = extcol.to_frame()
+print(extcol)
+
+
+data = y.join(extcol)
+print(data)
 
 kmeans = KMeans(n_clusters= 3)
  
@@ -149,17 +183,103 @@ print(center)
 data['cluster'] = kmeans.labels_
 
 # creating a plot which shpws clusters using pyplot
-for i in range(5):
+for i in range(3):
     cluster_data = data[data['cluster'] == i]
-    plt.scatter(cluster_data['EnergyPower1990'], cluster_data['EnergyUse1990'], label=f'Cluster {i}')
+    plt.scatter(cluster_data['EnergyPower2014'], cluster_data['EnergyUse2014'], label=f'Cluster {i}')
 
 plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], marker='x', c='black', label='Cluster Centers')
-plt.xlabel('argicultural_land')
-plt.ylabel('cereal_yield')
+plt.xlabel('EnergyPower2014')
+plt.ylabel('EnergyUse2014')
 plt.title('Cluster Membership and Centers')
 plt.legend()
 plt.show()
 
 
 
+ePowerofChina = ePower[ ePower['Country Name']=='China']
+del  ePowerofChina['Country Name']
+del  ePowerofChina['Indicator Name']
+del  ePowerofChina['Country Code']
+del  ePowerofChina['Indicator Code']
+del  ePowerofChina['2020']
+del  ePowerofChina['2021']
+print(type( ePowerofChina))
+gdparr =  ePowerofChina.values.tolist()
+print(gdparr)
 
+
+year = []
+for i in range(31):
+    year.append(1989+i)
+
+
+x = []
+for i in range(31):
+    x.append(i)
+
+dfChina = pd.DataFrame(columns = ['years','Energy Power'],
+                    index = x )
+print(dfChina.loc[0][0])
+for i in range(31):
+    dfChina.loc[i] = [year[i],gdparr[0][i]]
+    dfChina = dfChina.dropna(axis=0)
+    dfChina['years'] = dfChina['years'].astype(float)
+print(dfChina)
+
+
+parameter, curve = curve_fit(logistics, dfChina["years"],
+                        dfChina["Energy Power"])
+print("Fit parameter", parameter)
+dfChina["log"] = logistics(dfChina["years"], *parameter)
+
+plt.figure()
+plt.plot(dfChina["years"], dfChina["Energy Power"], label="data")
+plt.plot(dfChina["years"], dfChina["log"], label="fit")
+
+plt.legend()
+plt.title("First fit attempt")
+plt.xlabel("year")
+plt.ylabel("Energy Power of China")
+plt.show()
+print()
+
+
+# estimating turning year: 2000
+parameter = [66, 0.02, 2000]
+dfChina["log"] = logistics(dfChina["years"], *parameter)
+
+plt.figure()
+plt.plot(dfChina["years"], dfChina["Energy Power"], label="data")
+plt.plot(dfChina["years"],dfChina["log"], label="fit")
+
+plt.legend()
+plt.xlabel("years")
+plt.ylabel("Energy Power of China")
+plt.title("Improved start value")
+plt.show()
+
+
+parameter, curve = curve_fit(logistics, dfChina["years"],  dfChina["Energy Power"],
+                         p0 = [66, 0.02, 2000])
+print("Fit parameter", parameter)
+dfChina["log"] = logistics(dfChina["years"], *parameter)
+sigma = np.sqrt(np.diagonal(curve))
+a = ufloat(parameter[0], sigma[0])
+b = ufloat(parameter[1], sigma[1])
+x_pred = np.linspace(1995, 2025, 20)
+text_res = "Best fit parameters:\na = {}\nb = {}".format(a, b)
+print(text_res)
+
+plt.figure()
+plt.plot(dfChina["years"],dfChina["Energy Power"], label="data")
+plt.plot(x_pred, logistics(x_pred, *parameter), 'red', label="fit")
+bound_upper = logistics(x_pred, *(parameter + sigma))
+bound_lower = logistics(x_pred, *(parameter - sigma))
+# plotting confidence intervals
+plt.fill_between(x_pred, bound_lower, bound_upper,
+                 color='black', alpha=0.15, label="Confidence")
+plt.legend()
+plt.title("Final logistics function")
+plt.xlabel("years")
+plt.ylabel("Energy Power of China")
+plt.show()
