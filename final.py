@@ -40,8 +40,9 @@ def logistics(t, n0, g, t0):
     f = n0 / (1 + np.exp(-g*(t - t0)))
     return f
 
-ePower = pd.read_csv('C://Users//Administrator//Desktop//EnergyPower.csv')
-eUse = pd.read_csv('C://Users//Administrator//Desktop//EnergyUse.csv')
+
+ePower = pd.read_csv('C:\\Users\\RajaI\\Desktop\\Electricpower.csv')
+eUse = pd.read_csv('C:\\Users\\RajaI\\Desktop\\Energyuse.csv')
 
 Energy_power = worldbankdatafile(ePower)
 energy_use = worldbankdatafile(eUse)
@@ -137,7 +138,6 @@ plt.show()
 
 
 kmeans = KMeans(n_clusters= 3)
- 
 #prediction the labels of clusters.
 pred = kmeans.fit(data)
 print(pred)
@@ -227,52 +227,45 @@ for i in range(31):
 print(dfChina)
 
 
-parameter, curve = curve_fit(logistics, dfChina["years"],
-                        dfChina["Energy Power"])
-print("Fit parameter", parameter)
+parameter, curve = curve_fit(logistics, dfChina["years"],    dfChina["Energy Power"])
+print("Fit curve parameter", parameter)
 dfChina["log"] = logistics(dfChina["years"], *parameter)
-
 plt.figure()
-plt.plot(dfChina["years"], dfChina["Energy Power"], label="data")
-plt.plot(dfChina["years"], dfChina["log"], label="fit")
-
+plt.plot(dfChina["years"], dfChina["Energy Power"], label="data curve")
+plt.plot(dfChina["years"], dfChina["log"], label="fit curve")
 plt.legend()
-plt.title("First fit attempt")
+plt.title("First fit curve attempt")
 plt.xlabel("year")
-plt.ylabel("Energy Power of China")
+plt.ylabel("Electric Power of China")
 plt.show()
 print()
 
 
-# estimating turning year: 2000
-parameter = [66, 0.02, 2000]
+# estimating turning year: 1997
+parameter = [1.75, 0.02, 1973]
 dfChina["log"] = logistics(dfChina["years"], *parameter)
-
 plt.figure()
-plt.plot(dfChina["years"], dfChina["Energy Power"], label="data")
-plt.plot(dfChina["years"],dfChina["log"], label="fit")
-
+plt.plot(dfChina["years"], dfChina["Energy Power"], label="data curve")
+plt.plot(dfChina["years"],dfChina["log"], label="fit curve")
 plt.legend()
 plt.xlabel("years")
-plt.ylabel("Energy Power of China")
-plt.title("Improved start value")
+plt.ylabel("Electric Power of China")
+plt.title("Improved start value curve fit")
 plt.show()
 
 
 parameter, curve = curve_fit(logistics, dfChina["years"],  dfChina["Energy Power"],
-                         p0 = [66, 0.02, 2000])
+                             p0 = [5.10, 0.02, 2019])
 print("Fit parameter", parameter)
-dfChina["log"] = logistics(dfChina["years"], *parameter)
 sigma = np.sqrt(np.diagonal(curve))
 a = ufloat(parameter[0], sigma[0])
 b = ufloat(parameter[1], sigma[1])
-x_pred = np.linspace(1995, 2025, 20)
-text_res = "Best fit parameters:\na = {}\nb = {}".format(a, b)
+x_pred = np.linspace(2000, 2040, 20)
+text_res = "Best curve fit parameters:\na = {}\nb = {}".format(a, b)
 print(text_res)
-
 plt.figure()
-plt.plot(dfChina["years"],dfChina["Energy Power"], label="data")
-plt.plot(x_pred, logistics(x_pred, *parameter), 'red', label="fit")
+plt.plot(dfChina["years"], dfChina["Energy Power"], label="data curve")
+plt.plot(x_pred, logistics(x_pred, *parameter), 'red', label="fit curve")
 bound_upper = logistics(x_pred, *(parameter + sigma))
 bound_lower = logistics(x_pred, *(parameter - sigma))
 # plotting confidence intervals
@@ -281,5 +274,5 @@ plt.fill_between(x_pred, bound_lower, bound_upper,
 plt.legend()
 plt.title("Final logistics function")
 plt.xlabel("years")
-plt.ylabel("Energy Power of China")
+plt.ylabel("Electric Power of China")
 plt.show()
